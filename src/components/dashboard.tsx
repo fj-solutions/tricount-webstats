@@ -4,6 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableRow, TableCell, TableBody } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { House } from "lucide-react";
+import TricountTransactionTable from "./TricountTransactionTable";
+import TricountStats from "./TricountStats";
 
 interface TricountMember {
   name: string;
@@ -110,7 +113,7 @@ export default function Dashboard() {
       <Card className="mb-6">
         <CardHeader>
           <div className="flex items-center gap-2 text-2xl font-semibold">
-            <Button variant="ghost" onClick={() => window.history.back()}>←</Button>
+            <Button variant="outline" onClick={() => window.history.back()}><House /></Button>
             {data.emoji}
             {data.title}
           </div>
@@ -140,51 +143,7 @@ export default function Dashboard() {
       <Card className="mb-6">
         <CardHeader>Transaktionen</CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableCell>Datum</TableCell>
-                <TableCell>Kategorie</TableCell>
-                <TableCell>Beschreibung</TableCell>
-                <TableCell>Betrag</TableCell>
-                <TableCell>Zahler</TableCell>
-                <TableCell>Verteilung</TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.transactions.map((t) => (
-                <TableRow key={t.uuid}>
-                  <TableCell>{formatGermanDate(t.date)}</TableCell>
-                  <TableCell>{handleCategory(t.category, t.category_custom)}</TableCell>
-                  <TableCell>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span>{t.description}</span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <span>Kategorie: {t.category}</span>
-                          <div>Typ: {t.type}</div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </TableCell>
-                  <TableCell>{t.amount} {t.currency}</TableCell>
-                  <TableCell>{t.whoPaid}</TableCell>
-                  <TableCell>
-                    {t.allocations.map((a) => (
-                        <Badge
-                            key={a.uuid}
-                            className={memberColorMap[a.uuid] + " mr-1"}
-                        >
-                            {a.name}: {a.value} {a.currency}
-                        </Badge>
-                    ))}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <TricountTransactionTable transactions={data.transactions} members={data.memberships} />
           <div className="mt-2 text-muted-foreground">
             Anzahl Transaktionen: {data.num_transactions}
           </div>
@@ -200,6 +159,12 @@ export default function Dashboard() {
               </li>
             ))}
           </ul>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>Statistiken</CardHeader>
+        <CardContent>
+          <TricountStats transactions={data.transactions} members={data.memberships} />
         </CardContent>
       </Card>
     </div>

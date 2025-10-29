@@ -149,7 +149,7 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
-      <Card>
+      <Card className="mb-6">
         <CardHeader>Verteilung</CardHeader>
         <CardContent>
           <ul>

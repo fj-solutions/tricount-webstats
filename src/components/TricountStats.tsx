@@ -1,189 +1,310 @@
 import React, { useMemo, useState } from "react";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import { Table, TableHeader, TableRow, TableCell, TableBody } from "@/components/ui/table";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectItem, SelectContent } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableCell,
+  TableBody,
+} from "@/components/ui/table";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  LabelList,
+} from "recharts";
 
-// --- Shadcn Calendar/Popover Setup ---
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { addDays, format } from "date-fns";
-
-const COLORS = [
-  "#F472B6", "#FDE68A", "#6EE7B7", "#93C5FD", "#C4B5FD", "#FECACA", "#A7F3D0", "#FBCFE8"
-];
-
-// --- Date Range Picker (shadcn-style) ---
-function DateRangeFilter({ value, onChange }) {
-  const display =
-    value?.from && value?.to
-      ? `${format(value.from, "dd.MM.yyyy")} – ${format(value.to, "dd.MM.yyyy")}`
-      : value?.from
-        ? format(value.from, "dd.MM.yyyy")
-        : "Zeitraum wählen";
-
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" className="w-[220px] justify-start text-left font-normal">
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {display}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-auto p-0">
-        <Calendar
-          mode="range"
-          selected={value}
-          onSelect={onChange}
-          numberOfMonths={2}
-        />
-      </PopoverContent>
-    </Popover>
-  );
+export interface TricountAllocation {
+  name: string;
+  value: number;
+  currency?: string;
 }
 
-// --- Die eigentliche Statistik-Komponente ---
-export default function TricountStats({ transactions, members }) {
-  const [dateRange, setDateRange] = useState<{ from?: Date, to?: Date }>({});
+export interface TricountTransaction {
+  id: string | number;
+  date: string;
+  description?: string;
+  amount: number;
+  currency?: string;
+  category?: string;
+  category_custom?: string;
+  whoPaid?: string;
+  allocations?: TricountAllocation[];
+}
+
+interface Props {
+  transactions: TricountTransaction[];
+  members?: { name: string; uuid?: string }[];
+}
+
+const colorPalette = [
+  "#3b82f6",
+  "#10b981",
+  "#8b5cf6",
+  "#f59e0b",
+  "#ef4444",
+  "#06b6d4",
+  "#a855f7",
+  "#22c55e",
+];
+
+function translateCategory(category: string): string {
+  const map: Record<string, string> = {
+    FOOD_AND_DRINK: "Essen & Trinken",
+    TRANSPORT: "Transport",
+    GROCERIES: "Lebensmittel",
+    TRAVEL: "Reise & Unterkunft",
+    SHOPPING: "Shopping",
+    UNCATEGORIZED: "Unkategorisiert",
+    OTHER: "Sonstiges",
+  };
+  return map[category] || category;
+}
+
+export default function TricountStats({
+  transactions = [],
+  members = [],
+}: Props) {
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [memberFilter, setMemberFilter] = useState("");
 
-  // Kategorienliste
-  const categories = useMemo(() => {
-    const cats = new Set();
-    transactions.forEach(t => {
-      const base = t.category === "OTHER" && t.category_custom ? t.category_custom : t.category;
-      if (base) cats.add(base);
+  // Filter nach Zeitraum + Mitglied
+  const filteredData = useMemo(() => {
+    return transactions.filter((t) => {
+      const date = new Date(t.date);
+      const afterStart = startDate ? date >= new Date(startDate) : true;
+      const beforeEnd = endDate
+        ? date <= new Date(endDate + "T23:59:59")
+        : true;
+
+      let memberMatch = true;
+      if (memberFilter && t.allocations?.length) {
+        memberMatch = t.allocations.some((a) => a.name === memberFilter);
+      }
+
+      return afterStart && beforeEnd && memberMatch;
     });
-    return Array.from(cats);
-  }, [transactions]);
+  }, [transactions, startDate, endDate, memberFilter]);
 
-  const memberList = useMemo(() => members.map(m => m.name), [members]);
-
-    const filteredTx = useMemo(() => {
-    return transactions.filter(t => {
-        let ok = true;
-        if (dateRange.from) ok = ok && new Date(t.date) >= dateRange.from;
-        if (dateRange.to)   ok = ok && new Date(t.date) <= addDays(dateRange.to, 1);
-        // "all" bedeutet: kein Filter aktiv!
-        if (memberFilter !== "all") {
-        ok = ok && (
-            t.whoPaid === memberFilter ||
-            (t.allocations || []).some(a => a.name === memberFilter)
-        );
-        }
-        return ok;
-    });
-    }, [transactions, dateRange, memberFilter]);
-
-
-
-  // Kategorie-Gruppierung
-  const statsByCategory = useMemo(() => {
+  // Summen je Kategorie basierend auf Allocations (wer was zu bezahlen hat)
+  const chartData = useMemo(() => {
     const sums: Record<string, number> = {};
-    filteredTx.forEach(t => {
-      const cat = t.category === "OTHER" && t.category_custom ? t.category_custom : t.category || "Sonstiges";
-      if (!cat) return;
-      sums[cat] = (sums[cat] || 0) + Math.abs(Number(t.amount));
-    });
-    return Object.entries(sums)
-      .map(([category, total]) => ({ category, total }))
-      .sort((a, b) => b.total - a.total);
-  }, [filteredTx]);
 
-  const pieData = statsByCategory.map(row => ({
-    name: row.category,
-    value: row.total,
-  }));
+    filteredData.forEach((t) => {
+      const cat =
+        t.category === "OTHER"
+          ? t.category_custom || "Sonstiges"
+          : translateCategory(t.category || "Unkategorisiert");
+
+      if (t.allocations?.length) {
+        t.allocations.forEach((a) => {
+          if (!memberFilter || a.name === memberFilter) {
+            sums[cat] = (sums[cat] || 0) + Math.abs(a.value || 0);
+          }
+        });
+      } else {
+        // Falls keine allocations existieren, auf Gesamtbetrag zurückgreifen
+        sums[cat] = (sums[cat] || 0) + Math.abs(t.amount || 0);
+      }
+    });
+
+    return Object.entries(sums)
+      .map(([category, amount]) => ({ category, amount }))
+      .sort((a, b) => b.amount - a.amount);
+  }, [filteredData, memberFilter]);
+
+  // Summen je Mitglied (basierend auf Allocations)
+  const memberTotals = useMemo(() => {
+    const totals: Record<string, number> = {};
+
+    filteredData.forEach((t) => {
+      if (t.allocations?.length) {
+        t.allocations.forEach((a) => {
+          totals[a.name] = (totals[a.name] || 0) + Math.abs(a.value || 0);
+        });
+      }
+    });
+
+    return Object.entries(totals)
+      .map(([member, total]) => ({ member, total }))
+      .sort((a, b) => b.total - a.total);
+  }, [filteredData]);
 
   return (
-    <Card className="mt-10">
+    <Card className="w-full">
       <CardHeader>
-        <span className="text-lg font-bold">Kategorie-Statistiken</span>
+        <CardTitle>Statistik-Übersicht</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-wrap gap-4 items-end mb-6">
-          {/* Zeitraum Picker */}
-          <div>
-            <span className="block text-xs mb-1">Zeitraum</span>
-            <DateRangeFilter value={dateRange} onChange={setDateRange} />
-            {dateRange.from && (
-              <span className="block text-xs mt-1 text-muted-foreground">
-                {format(dateRange.from, "dd.MM.yyyy")}
-                {dateRange.to && <> – {format(dateRange.to, "dd.MM.yyyy")}</>}
-              </span>
-            )}
+        {/* Filter */}
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600">Von:</label>
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-40"
+            />
           </div>
-          {/* Mitgliedsauswahl */}
-          <div>
-            <span className="block text-xs mb-1">Mitglied</span>
-            <Select value={memberFilter} onValueChange={setMemberFilter} className="min-w-[120px]">
-                <SelectContent>
-                <SelectItem value="all">Alle Mitglieder</SelectItem>
-                {memberList.map((m) => (
-                    <SelectItem key={m} value={m}>{m}</SelectItem>
-                ))}
-                </SelectContent>
-            </Select>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600">Bis:</label>
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-40"
+            />
           </div>
-
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600">Mitglied:</label>
+            <select
+              value={memberFilter}
+              onChange={(e) => setMemberFilter(e.target.value)}
+              className="border rounded px-2 py-1 text-sm"
+            >
+              <option value="">Alle</option>
+              {members.map((m) => (
+                <option key={m.name} value={m.name}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          </div>
           <Button
             variant="outline"
-            className="mt-2"
             size="sm"
-            onClick={() => { setDateRange({}); setMemberFilter(""); }}
+            onClick={() => {
+              setStartDate("");
+              setEndDate("");
+              setMemberFilter("");
+            }}
           >
             Filter zurücksetzen
           </Button>
         </div>
-        <div className="flex gap-10 flex-wrap">
-          {/* PIE CHART */}
-            <div className="w-[320px] min-w-[160px] min-h-[220px] h-[220px] flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
+
+        {/* Diagramm + Tabelle */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Pie Chart */}
+          <div className="w-full h-80">
+            <ResponsiveContainer>
               <PieChart>
                 <Pie
-                  data={pieData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%" cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
-                  fill="#8884d8"
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
+                  data={chartData}
+                  dataKey="amount"
+                  nameKey="category"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={110}
                 >
-                  {pieData.map((entry, idx) => (
-                    <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
+                  {chartData.map((entry, index) => (
+                    <Cell
+                      key={entry.category}
+                      fill={colorPalette[index % colorPalette.length]}
+                    />
                   ))}
+                  <LabelList
+                    dataKey="amount"
+                    position="outside"
+                    formatter={(label: any) => {
+                      const parsed = parseFloat(String(label));
+                      const num = !isNaN(parsed) ? parsed : 0;
+                      return `${num.toFixed(2)} €`;
+                    }}
+                  />
                 </Pie>
-                <Tooltip formatter={(v) => `${v.toLocaleString("de-DE", { minimumFractionDigits: 2 })} €`} />
+                <Tooltip
+                  formatter={(value: any) => {
+                    const parsed = parseFloat(String(value));
+                    const num = !isNaN(parsed) ? parsed : 0;
+                    return `${num.toFixed(2)} €`;
+                  }}
+                />
+                <Legend />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          {/* Tabelle */}
-          <div className="flex-1">
+
+          {/* Tabelle: Summen pro Kategorie */}
+          <div>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableCell as="th">Kategorie</TableCell>
-                  <TableCell as="th" align="right">Gesamt</TableCell>
+                  <TableCell>Kategorie</TableCell>
+                  <TableCell className="text-right">Betrag (€)</TableCell>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {statsByCategory.length > 0 ? statsByCategory.map(({ category, total }) => (
-                  <TableRow key={category}>
-                    <TableCell>{category}</TableCell>
-                    <TableCell align="right">{Number(total).toFixed(2)} €</TableCell>
-                  </TableRow>
-                )) : (
+                {chartData.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={2} className="text-center text-gray-500">Keine Daten</TableCell>
+                    <TableCell
+                      colSpan={2}
+                      className="text-center text-gray-400 py-4"
+                    >
+                      Keine Daten im gewählten Zeitraum
+                    </TableCell>
                   </TableRow>
+                ) : (
+                  chartData.map((item) => (
+                    <TableRow key={item.category}>
+                      <TableCell>{item.category}</TableCell>
+                      <TableCell className="text-right">
+                        {item.amount.toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
               </TableBody>
             </Table>
           </div>
+        </div>
+
+        {/* Gesamtsummen pro Mitglied */}
+        <div className="mt-8">
+          <h3 className="text-lg font-semibold mb-2">
+            Gesamtausgaben (nach Anteil)
+          </h3>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableCell>Mitglied</TableCell>
+                <TableCell className="text-right">Gesamt (€)</TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {memberTotals.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={2}
+                    className="text-center text-gray-400 py-4"
+                  >
+                    Keine Daten
+                  </TableCell>
+                </TableRow>
+              ) : (
+                memberTotals.map((m) => (
+                  <TableRow key={m.member}>
+                    <TableCell>{m.member}</TableCell>
+                    <TableCell className="text-right">
+                      {m.total.toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
       </CardContent>
     </Card>

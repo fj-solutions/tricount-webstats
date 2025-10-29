@@ -23,5 +23,5 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
-# key file
-data/tricount-keys.json
+# VSCode setting folder
+.vscode/

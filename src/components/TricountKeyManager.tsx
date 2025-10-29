@@ -6,6 +6,7 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, Dialog
 import { Trash } from "lucide-react";
 import { Loader2 } from "lucide-react"; // shadcn loading spinner
 import GitHubButton from 'react-github-btn'
+import type { DialogDescription } from "@radix-ui/react-dialog";
 
 export default function TricountKeyManager() {
   const [keys, setKeys] = useState<{ key: string; title: string; emoji: string }[]>([]);
@@ -57,25 +58,28 @@ export default function TricountKeyManager() {
       <Card className="mb-4 w-full max-w-xl">
         <CardHeader>
           <div className="flex justify-between items-center">
-            <span className="text-xl font-semibold">Deine Tricounts</span>
+            <span className="text-xl font-semibold">Your Tricounts</span>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="secondary">Tricount hinzufügen</Button>
+                <Button variant="secondary">Add Tricount</Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Neuen Tricount-Key anlegen</DialogTitle>
+                  <DialogTitle>Add new Tricount</DialogTitle>
+                  <p>
+                    Obtain this key by sharing your Tricount via link (e.g. https://tricount.com/this-is-your-key).
+                  </p>
                 </DialogHeader>
                 <Input
-                  placeholder="TricountKey eingeben"
+                  placeholder="enter your TricountKey"
                   value={newKey}
                   onChange={e => setNewKey(e.target.value)}
                   className="mb-2"
                 />
                 <DialogFooter>
-                  <Button onClick={addKey}>Speichern</Button>
+                  <Button onClick={addKey}>Save</Button>
                   <DialogClose asChild>
-                    <Button variant="outline">Abbrechen</Button>
+                    <Button variant="outline">Cancel</Button>
                   </DialogClose>
                 </DialogFooter>
               </DialogContent>
@@ -90,7 +94,7 @@ export default function TricountKeyManager() {
           ) : (
             <>
               {keys.length === 0 ? (
-                <div className="text-gray-400">Keine gespeicherten Tricounts.</div>
+                <div className="text-gray-400">No saved Tricounts.</div>
               ) : (
                 <ul>
                   {keys.map(({ key, emoji, title }) => (

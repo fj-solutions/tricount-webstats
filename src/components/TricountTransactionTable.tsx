@@ -53,12 +53,12 @@ function getMemberColor(name: string, members: { name: string }[] = []): string 
 
 function translateCategory(category: string): string {
     const categoryMap: Record<string, string> = {
-        "FOOD_AND_DRINK": "Essen & Trinken",
+        "FOOD_AND_DRINK": "Food & Drink",
         "TRANSPORT": "Transport",
-        "GROCERIES": "Lebensmittel",
-        "TRAVEL": "Unterkunft",
+        "GROCERIES": "Groceries",
+        "TRAVEL": "Accommodation",
         "SHOPPING": "Shopping",
-        "UNCATEGORIZED": "Unkategorisiert",
+        "UNCATEGORIZED": "Uncategorized",
         "OTHER": "OTHER",
 
     };
@@ -107,7 +107,7 @@ export default function TricountTransactionTable({ transactions = [], members = 
     () => [
       {
         accessorKey: "date",
-        header: "Datum",
+        header: "Date",
         enableSorting: true,
         cell: ({ getValue }) => {
           const d = new Date(String(getValue()));
@@ -116,24 +116,24 @@ export default function TricountTransactionTable({ transactions = [], members = 
       },
       {
         accessorKey: "category",
-        header: "Kategorie",
+        header: "Category",
         enableSorting: false,
         cell: ({ row }) => {
           const { category, category_custom } = row.original;
           if (!category) return <span className="text-gray-400">—</span>;
-          const label = category === "OTHER" ? category_custom || "Sonstiges" : translateCategory(category);
+          const label = category === "OTHER" ? category_custom || "Other" : translateCategory(category);
           return <Badge>{label}</Badge>;
         },
       },
       {
         accessorKey: "description",
-        header: "Beschreibung",
+        header: "Description",
         enableSorting: false,
         cell: ({ getValue }) => <span>{String(getValue() || "")}</span>,
       },
       {
         accessorKey: "amount",
-        header: "Betrag",
+        header: "Amount",
         enableSorting: true,
         cell: ({ row }) => {
             const amt = Number(row.original.amount);
@@ -147,7 +147,7 @@ export default function TricountTransactionTable({ transactions = [], members = 
       },
       {
         accessorKey: "whoPaid",
-        header: "Zahler",
+        header: "Who paid?",
         enableSorting: true,
         cell: ({ row }) => {
           const name = row.original.whoPaid || "—";
@@ -157,7 +157,7 @@ export default function TricountTransactionTable({ transactions = [], members = 
       },
       {
         accessorKey: "allocations",
-        header: "Verteilung",
+        header: "Distribution",
         enableSorting: false,
         cell: ({ row }) => {
           const allocs = row.original.allocations || [];
@@ -219,7 +219,7 @@ export default function TricountTransactionTable({ transactions = [], members = 
             setCategoryFilter("");
           }}
         >
-          Filter zurücksetzen
+          Reset filters
         </Button>
       </div>
 
@@ -262,7 +262,7 @@ export default function TricountTransactionTable({ transactions = [], members = 
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="text-center text-gray-400 py-6">
-                Keine Daten
+                No data
               </TableCell>
             </TableRow>
           )}
@@ -278,7 +278,7 @@ export default function TricountTransactionTable({ transactions = [], members = 
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            ← Zurück
+            ← Back
           </Button>
           <Button
             variant="ghost"
@@ -286,11 +286,11 @@ export default function TricountTransactionTable({ transactions = [], members = 
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            Weiter →
+            Next →
           </Button>
         </div>
         <div className="text-sm text-gray-600">
-          Seite {pageIndex + 1} von {table.getPageCount()}
+          Page {pageIndex + 1} of {table.getPageCount()}
         </div>
         <div>
           <select

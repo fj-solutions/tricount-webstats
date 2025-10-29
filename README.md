@@ -1,46 +1,68 @@
-# Astro Starter Kit: Basics
+# Tricount Webstats
 
-```sh
-npm create astro@latest -- --template basics
+A sleek and reactive dashboard to visualize and analyze your **Tricount** groups in real time.
+
+
+---
+
+## ⭐ Features
+
+* 📊 **Dynamic statistics** for your Tricount groups
+  View and compare categories, members, and time periods.
+* 🪄 **Interactive visuals**
+  * Sorted pie charts and tables (Recharts + TanStack Table)
+* 🎨 **UI** powered by shadcn/ui and TailwindCSS
+* ⚡ **Easy Setup** via Tricount API
+
+---
+
+## 🚀 Quick Start
+
+### Requirements
+
+* Node.js **v18+**
+* npm or pnpm
+
+### Installation
+
+```bash
+git clone https://github.com/fj-solutions/tricount-webstats.git
+cd tricount-webstats
+npm install
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+### Run locally
 
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
+```bash
+npm run dev
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+Open [http://localhost:4321](http://localhost:4321) in your browser.
 
-## 🧞 Commands
+---
 
-All commands are run from the root of the project, from a terminal:
+## 🧩 Tech Stack
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+| Layer       | Technology                 |
+| ----------- | -------------------------- |
+| Frontend/UI | Astro + React              |
+| Styling     | TailwindCSS + shadcn/ui    |
+| Charts      | Recharts                   |
+| Tables      | TanStack Table v8          |
+| Backend/API | Astro API routes + Node.js |
+| Language    | TypeScript                 |
 
-## 👀 Want to learn more?
+---
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+## ⚙️ Configuration
+
+You can add Tricounts directly in the Dashboard. You only need the tricountKey. Obtain this key by sharing your Tricount via link (e.g. https://tricount.com/this-is-your-key ) and paste the key in the dasboard. The key is stored locally, anything else is fetched from the Tricount API.
+
+---
+
+## 🤝 Contribute
+
+If you add any features or fix any of my mistakes, please contribute to this project.
+This project was created for my own purpose in under 2 hours using Claude Code, so be prepared for the code quality.
+
+---

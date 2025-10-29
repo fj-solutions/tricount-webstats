@@ -90,19 +90,19 @@ export default function Dashboard() {
       const json = await res.json();
       setData(json);
     } catch (err: any) {
-      setError(err.message || "Fehler beim Laden");
+      setError(err.message || "Error fetching data");
     } finally {
       setLoading(false);
     }
   }
 
-  if (loading) return <div className="text-center py-10">⏳ Lade Daten...</div>;
+  if (loading) return <div className="text-center py-10">⏳ Loading data...</div>;
   if (error) return <div className="text-center py-10 text-red-600">{error}</div>;
   if (!data) return null;
 
     const memberColorMap: Record<string, string> = {};
     if (data && data.memberships) {
-        data.memberships.forEach((m, idx) => {
+        data.memberships.forEach((m: { uuid: string | number; }, idx: number) => {
             getMemberColor(m.uuid, idx, memberColorMap);
         });
     }
@@ -119,38 +119,38 @@ export default function Dashboard() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="mb-1">Beschreibung: {data.description}</div>
-          <div className="mb-1">Währung: {data.currency}</div>
+          <div className="mb-1">Description: {data.description}</div>
+          <div className="mb-1">Currency: {data.currency}</div>
           <div className="flex items-center gap-4 mb-2 mt-2">
-            <span>Gesamt: <strong>{data.total}</strong> €</span>
-            <Button variant="secondary" onClick={fetchData}>↻ Aktualisieren</Button>
+            <span>Total: <strong>{data.total}</strong> €</span>
+            <Button variant="secondary" onClick={fetchData}>↻ Refresh</Button>
           </div>
         </CardContent>
       </Card>
       <Card className="mb-6">
-        <CardHeader>Mitglieder</CardHeader>
+        <CardHeader>Members</CardHeader>
         <CardContent className="flex gap-2 flex-wrap">
-            {data.memberships.map((m, idx) => (
-                <Badge
-                    key={m.uuid}
-                    className={memberColorMap[m.uuid] + " mr-1"}
-                >
-                    {m.name}
-                </Badge>
+            {(data.memberships as TricountMember[]).map((m: TricountMember, idx: number) => (
+              <Badge
+                key={m.uuid}
+                className={memberColorMap[m.uuid] + " mr-1"}
+              >
+                {m.name}
+              </Badge>
             ))}
         </CardContent>
       </Card>
       <Card className="mb-6">
-        <CardHeader>Transaktionen</CardHeader>
+        <CardHeader>Transactions:</CardHeader>
         <CardContent>
           <TricountTransactionTable transactions={data.transactions} members={data.memberships} />
           <div className="mt-2 text-muted-foreground">
-            Anzahl Transaktionen: {data.num_transactions}
+            Number of Transactions: {data.num_transactions}
           </div>
         </CardContent>
       </Card>
       <Card className="mb-6">
-        <CardHeader>Verteilung</CardHeader>
+        <CardHeader>Distribution</CardHeader>
         <CardContent>
           <ul>
             {data.per_person && Object.entries(data.per_person).map(([name, amount]) => (
@@ -162,7 +162,7 @@ export default function Dashboard() {
         </CardContent>
       </Card>
       <Card>
-        <CardHeader>Statistiken</CardHeader>
+        <CardHeader>Statistics</CardHeader>
         <CardContent>
           <TricountStats transactions={data.transactions} members={data.memberships} />
         </CardContent>

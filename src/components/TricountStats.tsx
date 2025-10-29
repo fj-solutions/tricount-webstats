@@ -59,16 +59,17 @@ const colorPalette = [
 ];
 
 function translateCategory(category: string): string {
-  const map: Record<string, string> = {
-    FOOD_AND_DRINK: "Essen & Trinken",
-    TRANSPORT: "Transport",
-    GROCERIES: "Lebensmittel",
-    TRAVEL: "Reise & Unterkunft",
-    SHOPPING: "Shopping",
-    UNCATEGORIZED: "Unkategorisiert",
-    OTHER: "Sonstiges",
-  };
-  return map[category] || category;
+    const categoryMap: Record<string, string> = {
+        "FOOD_AND_DRINK": "Food & Drink",
+        "TRANSPORT": "Transport",
+        "GROCERIES": "Groceries",
+        "TRAVEL": "Accommodation",
+        "SHOPPING": "Shopping",
+        "UNCATEGORIZED": "Uncategorized",
+        "OTHER": "OTHER",
+
+    };
+    return categoryMap[category] || category;
 }
 
 export default function TricountStats({
@@ -144,13 +145,13 @@ export default function TricountStats({
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Statistik-Übersicht</CardTitle>
+        <CardTitle>Stats</CardTitle>
       </CardHeader>
       <CardContent>
         {/* Filter */}
         <div className="flex flex-wrap items-center gap-3 mb-6">
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">Von:</label>
+            <label className="text-sm text-gray-600">From:</label>
             <Input
               type="date"
               value={startDate}
@@ -159,7 +160,7 @@ export default function TricountStats({
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">Bis:</label>
+            <label className="text-sm text-gray-600">To:</label>
             <Input
               type="date"
               value={endDate}
@@ -168,13 +169,13 @@ export default function TricountStats({
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">Mitglied:</label>
+            <label className="text-sm text-gray-600">Member:</label>
             <select
               value={memberFilter}
               onChange={(e) => setMemberFilter(e.target.value)}
               className="border rounded px-2 py-1 text-sm"
             >
-              <option value="">Alle</option>
+              <option value="">All</option>
               {members.map((m) => (
                 <option key={m.name} value={m.name}>
                   {m.name}
@@ -191,7 +192,7 @@ export default function TricountStats({
               setMemberFilter("");
             }}
           >
-            Filter zurücksetzen
+            Reset filters
           </Button>
         </div>
 
@@ -242,8 +243,8 @@ export default function TricountStats({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableCell>Kategorie</TableCell>
-                  <TableCell className="text-right">Betrag (€)</TableCell>
+                  <TableCell>Category</TableCell>
+                  <TableCell className="text-right">Amount (€)</TableCell>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -253,7 +254,7 @@ export default function TricountStats({
                       colSpan={2}
                       className="text-center text-gray-400 py-4"
                     >
-                      Keine Daten im gewählten Zeitraum
+                      No data in time slot
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -274,13 +275,13 @@ export default function TricountStats({
         {/* Gesamtsummen pro Mitglied */}
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-2">
-            Gesamtausgaben (nach Anteil)
+            Total expenses (by share)
           </h3>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableCell>Mitglied</TableCell>
-                <TableCell className="text-right">Gesamt (€)</TableCell>
+                <TableCell>Member</TableCell>
+                <TableCell className="text-right">Total (€)</TableCell>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -290,7 +291,7 @@ export default function TricountStats({
                     colSpan={2}
                     className="text-center text-gray-400 py-4"
                   >
-                    Keine Daten
+                    No data available
                   </TableCell>
                 </TableRow>
               ) : (
